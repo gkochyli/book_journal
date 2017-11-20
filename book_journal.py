@@ -9,6 +9,7 @@
 import os
 import re
 import datetime
+import csv
 
 _title=[]
 _author=[]
@@ -19,72 +20,74 @@ index=0
 ##the result of these lists will be written in a file.
 ##RUN some code to define what "counter" to use to append to next line.
 
-		
-def init_write(index):
-	with open('init.txt','w') as init:
-		init.write('index='+str(index))
+def clear():
+	os.system('clear')
+
+def read_file():
+	progress('Reading database')
+	clear()
+	try:
+		count=0
+		with open('journal_data.txt') as csvfile:
+			textfile = csv.reader(csvfile,delimiter='|')
 			
+			for line in textfile:
+				count+=1
+				_title.append(line[0])
+				_author.append(line[1])
+				_date = line[2].split('-')
+				_begin.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
+				if (line[3]=='-'):
+					_end.append(line[3])
+				else:
+					_date = line[3].split('-')
+					_end.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
+				
+	except FileNotFoundError:
+		print('Error: There is nothing in the database\nTry adding a book first by typing "add" in "Choose action:"')
+	return count
 			
-def init_load():
-	pattern=r'index=([0-9]*)'
-	while True:	
-		try:
-			with open('init.txt','r') as init:
-				text = init.readlines()
-				for line in text:
-					match = re.match(pattern,line) 
-					if match:
-						index = match.group(1)	
-			return int(index)
-		except FileNotFoundError:
-			print('Creating init.txt ...')
-			os.system('echo "index=0" > init.txt')	
-	
-def print2file():
-	
-	#Print frame and titles
-	file=open('book_journal.txt','a')
-	if(index==0):
-		file.write('='*169)
-		file.write( '{0}| {1} | {2} | {3} | {4} | {5} |'
+				
+def print2file(i):
+	#Needs to be called inside every 'add' action
+	file=open('journal_data.txt','a')
+	file.write(_title[i]+'|'+_author[i]+'|'+str(_begin[i])+'|'+str(_end[i])+'\n')		  
+			  
+class IndexZero(Exception):
+	pass
+
+def show(index):
+	try:
+		clear()
+		print('='*169)
+		print( '{0}| {1} | {2} | {3} | {4} | {5} |'
 					.format( '#'.ljust(2),
 								'Title'.ljust(_s),
 								'Author'.ljust(_s),
 								'Started Reading on'.ljust(_s),
-								'Finished Reading in'.ljust(_s),
+								'Finished Reading on'.ljust(_s),
 								'Days Passed'.ljust(_s)
 						   ))
-		file.write('\n')
-	
-	for i in range(len(_title)):
-		if(_end[i]=='-'):
-			_days_finished = 'Still Reading...'
-		else:
-			_days_finished = _end[i]-_begin[i]
-			
-		file.write( str(i+1).ljust(2)+'| {0} | {1} | {2} | {3} | {4} |'
-				.format( _title[i].ljust(_s), _author[i].ljust(_s), str(_begin[i]).ljust(_s),
-					   	 str(_end[i]).ljust(_s), str(_days_finished).ljust(_s)	))	
-	file.close()
-	init_write(index)
-			  
-			  
-def show():
-	#Print to file
-	os.system('clear')
-	try:
-		file=open('book_journal.txt','r')
-		print(file.read())
-		file.close()
-	except FileNotFoundError as err:
-		print('Error: There is no book in the database\nTry adding a book by typing "add" in "Choose action:"')
+		print('-'*169)
 		
+		if (index==0):
+			raise IndexZero
+			
+		for i in range(index):
+				if(_end[i]=='-'):
+					_days_finished = 'Still Reading...'
+				else:
+					_days_finished = _end[i]-_begin[i]
+				print( str(i+1).ljust(2)+'| {0} | {1} | {2} | {3} | {4} |'
+					.format( _title[i].ljust(_s), _author[i].ljust(_s), str(_begin[i]).ljust(_s),
+							 str(_end[i]).ljust(_s), str(_days_finished).ljust(_s)	))
+	except IndexZero:
+		print('Error: There is nothing to show\nTry adding a book first by typing "add" in "Choose action:"')
 	
 	
 def add():
-	
+	clear()
 	#before adding, have to check if index is right.
-	index = init_load()
 	print('Welcome to your book journal! I hear you want to add something...\n')
 	_title.append( input(r'Add title: ') )
 
@@ -103,7 +106,7 @@ def add():
 			_date = input('Date started your book? ')
 			continue
 			
-	_date = input(r'When did you finish it? Give a date in the format of YYYY-MM-DD   OR   give a "-" if you still reading it: ')
+	_date = input(r'When did you finish it? Give a date in the format of YYYY-MM-DD   OR   give a "-" if you are still reading it: ')
 	while True:	
 		if re.match(date_pattern,_date):
 			_date = _date.split('-')
@@ -126,6 +129,8 @@ def add():
 		_days_finished = _end[index]-_begin[index]
 		print('So you finished it in '+str(_days_finished)+' days, huh? Good job!!')
 	
+	print2file(index)
+	
 
 def progress(string):
 	import sys
@@ -137,27 +142,23 @@ def progress(string):
 		os.system('sleep 1')
 	sys.stdout.write('\n')
 	
-def which_entry():
-	
+def which_entry(): 
 	print("You're currently in entry "+str(index+1))
 	
 	
-
-	
-	
+clear()
+index=read_file()
 while True:
-	index=init_load()
 	action = input(r'Choose action: ')
 	if (action=='add'):
 		add()
 		index+=1
 	elif (action=='show'):
 		progress('Loading')
-		show()
-	elif (action=='print2file'):
-		progress('Saving')
-		print2file()
+		show(index)
 	elif (action=='which_entry'):
 		which_entry()
 	elif (action=='quit' or action=='exit'):
 		break
+	else:
+		print('No such action. Try again...')
