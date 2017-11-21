@@ -10,13 +10,27 @@ import os
 import re
 import datetime
 import csv
+import math
+from functions import *
 
 _title=[]
 _author=[]
 _begin=[]
 _end=[]
-_s=30
+_days_passed=[]
 index=0
+
+def initialize():
+	_title[:]=[]
+	_author[:]=[]
+	_begin[:]=[]
+	_end[:]=[]
+	_days_passed[:]=[]
+	index=0
+
+h,w=get_res()
+_s=20
+
 ##the result of these lists will be written in a file.
 ##RUN some code to define what "counter" to use to append to next line.
 
@@ -31,17 +45,24 @@ def read_file():
 		with open('journal_data.txt') as csvfile:
 			textfile = csv.reader(csvfile,delimiter='|')
 			
-			for line in textfile:
+			for i,line in enumerate(textfile):
 				count+=1
 				_title.append(line[0])
 				_author.append(line[1])
-				_date = line[2].split('-')
-				_begin.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
-				if (line[3]=='-'):
+				
+				if (i==0):
+					_begin.append(line[2])
+				else:
+					_date = line[2].split('-')
+					_begin.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
+				
+				if (line[3]=='-' or i==0):
 					_end.append(line[3])
 				else:
 					_date = line[3].split('-')
 					_end.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
+				
+				_days_passed.append(str(line[4]))
 				
 	except FileNotFoundError:
 		print('Error: There is nothing in the database\nTry adding a book first by typing "add" in "Choose action:"')
@@ -51,36 +72,48 @@ def read_file():
 def print2file(i):
 	#Needs to be called inside every 'add' action
 	file=open('journal_data.txt','a')
-	file.write(_title[i]+'|'+_author[i]+'|'+str(_begin[i])+'|'+str(_end[i])+'\n')		  
+	if(i==0):
+		file.write('Title|Author|Started Reading on|Finished Reading on|Days Passed\n')
+	file.write(_title[i]+'|'+_author[i]+'|'+str(_begin[i])+'|'+str(_end[i])+'|'+str(_days_passed[i])+'\n')		  
+
+def clear_database():
+	os.system('rm -i journal_data.txt')
+	initialize()
+	
 			  
 class IndexZero(Exception):
 	pass
 
 def show(index):
 	try:
-		clear()
-		print('='*169)
-		print( '{0}| {1} | {2} | {3} | {4} | {5} |'
-					.format( '#'.ljust(2),
-								'Title'.ljust(_s),
-								'Author'.ljust(_s),
-								'Started Reading on'.ljust(_s),
-								'Finished Reading on'.ljust(_s),
-								'Days Passed'.ljust(_s)
-						   ))
-		print('-'*169)
+		initialize()
+
+		index=read_file()
+		max_lengths=[]
+#		for i in range()
 		
+		clear()
+	
 		if (index==0):
 			raise IndexZero
-			
+		
+		print('='*w)
 		for i in range(index):
-				if(_end[i]=='-'):
-					_days_finished = 'Still Reading...'
+				if (i==0):
+					line_number='#'
 				else:
-					_days_finished = _end[i]-_begin[i]
-				print( str(i+1).ljust(2)+'| {0} | {1} | {2} | {3} | {4} |'
-					.format( _title[i].ljust(_s), _author[i].ljust(_s), str(_begin[i]).ljust(_s),
-							 str(_end[i]).ljust(_s), str(_days_finished).ljust(_s)	))
+					line_number=i
+					
+				string = (str(line_number).ljust(2)+'| {0} | {1} | {2} | {3} | {4}').format(_title[i].ljust(get_maxstring(_title)),
+																			   _author[i].ljust(get_maxstring(_author)),
+																			   str(_begin[i]).ljust(get_maxstring(_begin)),
+																			   str(_end[i]).ljust(get_maxstring(_end)),
+																			   str(_days_passed[i]))
+				endline = w-len(string)
+				print(string+'|'.rjust(endline))
+				if (i==0):
+					print('-'*w)
+				
 	except IndexZero:
 		print('Error: There is nothing to show\nTry adding a book first by typing "add" in "Choose action:"')
 	
@@ -123,11 +156,11 @@ def add():
 			continue		
 	
 	if (_date=='-'):
-		_days_finished='Still Reading...'
+		_days_passed.append('Still Reading...')
 		print('I see you still on it... Good for you!!')
 	else:
-		_days_finished = _end[index]-_begin[index]
-		print('So you finished it in '+str(_days_finished)+' days, huh? Good job!!')
+		_days_passed.append( _end[index]-_begin[index] )
+		print('So you finished it in '+str(_days_passed[index])+' days, huh? Good job!!')
 	
 	print2file(index)
 	
@@ -143,11 +176,11 @@ def progress(string):
 	sys.stdout.write('\n')
 	
 def which_entry(): 
-	print("You're currently in entry "+str(index+1))
-	
+	print("You're currently in entry "+str(index-1))
 	
 clear()
 index=read_file()
+#print(_title[0])
 while True:
 	action = input(r'Choose action: ')
 	if (action=='add'):
@@ -158,6 +191,8 @@ while True:
 		show(index)
 	elif (action=='which_entry'):
 		which_entry()
+	elif (action=='clear_database'):
+		clear_database()
 	elif (action=='quit' or action=='exit'):
 		break
 	else:
