@@ -27,6 +27,7 @@ def initialize():
 	_end[:]=[]
 	_days_passed[:]=[]
 	index=0
+	return index
 
 h,w=get_res()
 _s=20
@@ -72,13 +73,14 @@ def read_file():
 def print2file(i):
 	#Needs to be called inside every 'add' action
 	file=open('journal_data.txt','a')
-	if(i==0):
+	if (i==0):
 		file.write('Title|Author|Started Reading on|Finished Reading on|Days Passed\n')
 	file.write(_title[i]+'|'+_author[i]+'|'+str(_begin[i])+'|'+str(_end[i])+'|'+str(_days_passed[i])+'\n')		  
 
 def clear_database():
 	os.system('rm -i journal_data.txt')
-	initialize()
+	index=initialize()
+	return index
 	
 			  
 class IndexZero(Exception):
@@ -86,12 +88,8 @@ class IndexZero(Exception):
 
 def show(index):
 	try:
-		initialize()
-
+		index=initialize()
 		index=read_file()
-		max_lengths=[]
-#		for i in range()
-		
 		clear()
 	
 		if (index==0):
@@ -120,6 +118,7 @@ def show(index):
 	
 def add():
 	clear()
+	
 	#before adding, have to check if index is right.
 	print('Welcome to your book journal! I hear you want to add something...\n')
 	_title.append( input(r'Add title: ') )
@@ -129,41 +128,72 @@ def add():
 	date_pattern=r'....-..-..'
 	_date = input(r'When did you start it? Give a date in the format of YYYY-MM-DD: ')
 	while True:	
-		if re.match(date_pattern,_date):
-			_date = _date.split('-')
-			_begin.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
-			print(_begin[index])
-			break
-		else:
+		try:
+			if re.match(date_pattern,_date):
+				_date = _date.split('-')
+				_begin.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
+				print(_begin[index])
+				break
+			else:
+				print('Try again!! Remember, YYYY-MM-DD')
+				_date = input('Date started your book? ')
+				continue
+		except ValueError:
 			print('Try again!! Remember, YYYY-MM-DD')
 			_date = input('Date started your book? ')
 			continue
 			
 	_date = input(r'When did you finish it? Give a date in the format of YYYY-MM-DD   OR   give a "-" if you are still reading it: ')
 	while True:	
-		if re.match(date_pattern,_date):
-			_date = _date.split('-')
-			_end.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
-			print(_end[index])
-			break
-		elif (_date=='-'):
-			_end.append(_date)
-			print("Still Reading...")
-			break
-		else:
+		try:
+			if re.match(date_pattern,_date):
+				_date = _date.split('-')
+				_end.append(datetime.date(int(_date[0]),int(_date[1]),int(_date[2])))
+				print(_end[index])
+				break
+			elif (_date=='-'):
+				_end.append(_date)
+				print("Still Reading...")
+				break
+			else:
+				print('Try again!! Remember, YYYY-MM-DD')
+				_date = input('Date finished your book? ')
+				continue		
+		except ValueError:
 			print('Try again!! Remember, YYYY-MM-DD')
 			_date = input('Date finished your book? ')
 			continue		
 	
 	if (_date=='-'):
 		_days_passed.append('Still Reading...')
-		print('I see you still on it... Good for you!!')
+		print('I see you are still on it... Good for you!!')
 	else:
 		_days_passed.append( _end[index]-_begin[index] )
 		print('So you finished it in '+str(_days_passed[index])+' days, huh? Good job!!')
 	
 	print2file(index)
 	
+
+def delete():
+	show(index)
+	edit_index = int(input("\nWhich entry you want to delete? #:"))
+	
+	
+	del _title[edit_index]
+	del _author[edit_index]
+	del _begin[edit_index]
+	del _end[edit_index]
+	del _days_passed[edit_index]
+	
+	os.system('rm -i journal_data.txt')
+	
+	for i in range(index-1):
+		print2file(i)
+	
+	show(index-1)
+	print('\nEntry #'+str(edit_index)+' was deleted!\n')
+	#Maybe add an undo option here.
+	return index-1
 
 def progress(string):
 	import sys
@@ -174,26 +204,35 @@ def progress(string):
 		sys.stdout.flush()
 		os.system('sleep 1')
 	sys.stdout.write('\n')
+
+def backup_database():
+	os.system('cp journal_data.txt journal_data.txt.bak')
+	
 	
 def which_entry(): 
-	print("You're currently in entry "+str(index-1))
+	print("You're currently in entry "+str(index))
 	
 clear()
 index=read_file()
 #print(_title[0])
+#print(_author[0])
+
 while True:
 	action = input(r'Choose action: ')
 	if (action=='add'):
 		add()
 		index+=1
 	elif (action=='show'):
-		progress('Loading')
 		show(index)
 	elif (action=='which_entry'):
 		which_entry()
 	elif (action=='clear_database'):
-		clear_database()
+		index=clear_database()
 	elif (action=='quit' or action=='exit'):
 		break
+	elif (action=='delete'):
+		index=delete()
+	elif (action=='backup_database'):
+		backup_database()
 	else:
 		print('No such action. Try again...')
