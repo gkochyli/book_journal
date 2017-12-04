@@ -110,7 +110,8 @@ def show(index):
 				endline = w-len(string)
 				print(string+'|'.rjust(endline))
 				if (i==0):
-					print('-'*w)
+		
+		print('-'*w)
 				
 	except IndexZero:
 		print('Error: There is nothing to show\nTry adding a book first by typing "add" in "Choose action:"')
@@ -236,3 +237,5 @@ while True:
 		backup_database()
 	else:
 		print('No such action. Try again...')
+		
+		
