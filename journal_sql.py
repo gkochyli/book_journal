@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-
-
 """
 =====================================
 |		Stores books I've read		|
@@ -113,6 +111,11 @@ def show():
 																		   str(_end[i]).ljust(get_maxstring(_end)),
 																		   str(_days_passed[i]))
 		endline = w-len(string)
+		#break when string is longer than line-width
+		if len(string)>w:
+			print("###Maximize window to achieve optimal results###")
+			break
+			
 		print(string+'|'.rjust(endline))
 		if (i==0):
 			print('-'*w)
@@ -146,6 +149,7 @@ def clear():
 
 
 clear()
+show()
 while True:
 	action = input(r'Choose action: ')
 	if (action=='add'):
