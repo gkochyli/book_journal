@@ -2,7 +2,7 @@
 
 """
 =====================================
-|		Stores books I've read		|
+|	Stores books I've read      |
 =====================================
 """
 
@@ -231,6 +231,7 @@ while True:
 		index=clear_database()
 	elif (action=='quit' or action=='exit'):
 		break
+<<<<<<< HEAD
 	elif (action=='delete'):
 		index=delete()
 	elif (action=='backup_database'):
@@ -239,3 +240,5 @@ while True:
 		print('No such action. Try again...')
 		
 		
+=======
+>>>>>>> 9bffd8e9769c432e98fd6713880029bf85e1f6a7
